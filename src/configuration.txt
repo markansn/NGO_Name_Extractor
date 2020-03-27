@@ -1,0 +1,2 @@
+ffcc4bbd174c4b6e97d0a945aebf8b98
+https://uksouth.api.cognitive.microsoft.com/
