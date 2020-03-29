@@ -4,6 +4,7 @@ import json
 import string
 from io import BytesIO
 from PIL import Image
+import connect
 import pickle
 import pymysql
 from tqdm import tqdm
@@ -26,12 +27,7 @@ setofwords = set(line.strip() for line in open(
 punctuation = str.maketrans(dict.fromkeys(string.punctuation)) #credit https://stackoverflow.com/questions/265960/best-way-to-strip-punctuation-from-a-string
 
 
-connection = pymysql.connect(host='ancssc-db.mysql.database.azure.com',
-                             user='ancssc@ancssc-db',
-                             password='819UiC@Uj&$Z^GY',
-                             db='team_36_db_do_not_touch',
-                             charset='utf8mb4',
-                             cursorclass=pymysql.cursors.DictCursor)
+connection = connect.connection
 
 
 
@@ -250,7 +246,7 @@ def main():
 
 
 	database_items = get_pdfs_in_db()
-	print(database_items)
+
 	files = glob.glob("../reports/*.pdf")
 	for file in files:
 		file_name = file.replace("../reports/", "")
@@ -275,6 +271,7 @@ def main():
 					for word in words:
 						s += word + " "
 						print(s)
+
 				elif answer == "n":
 					break
 				elif answer != "-":
