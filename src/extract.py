@@ -5,21 +5,6 @@ import string
 from io import BytesIO
 from PIL import Image
 import connect
-import pickle
-import pymysql
-from tqdm import tqdm
-# import nltk
-# from nltk.corpus import words as nltk_words
-# nltk.download('words')
-# dictionary = dict.fromkeys(nltk_words.words(), None)
-
-# def is_english_word(word): #credit https://stackoverflow.com/questions/3788870/how-to-check-if-a-word-is-an-english-word-with-python
-#
-#     try:
-#         x = dictionary[word]
-#         return True
-#     except KeyError:
-#         return False
 
 
 setofwords = set(line.strip() for line in open(
@@ -89,28 +74,17 @@ def getWordsOnPage(page, images, word_exists):
 	except:
 		return []
 
-	# for img in images[0]:
-	#
-	#     text = getTextFromImage(img)
+
 
 	words_on_first_page = []
 	banned_words = ["annual", "report", "", " ", "results", "reports"]
 	for word in first_page:
-		# print(word)
-		#print(word)
-		# if '@' in word.lower() or "www." in word.lower() or ".org" in word.lower():
-		#     print(word)
 
 
 		word = word.lower().translate(punctuation)
 
-		# if not word_exists:
-		#
-		#     if word not in setofwords and not word.isdigit():
-		#         words_on_first_page.append(word)
-		# else:
-		#     if not word.isdigit:
-		#         words_on_first_page.append(word)
+
+
 		if word not in banned_words:
 			words_on_first_page.append(word)
 	return words_on_first_page
@@ -121,8 +95,8 @@ def possible_name_in_file_name(word, reportName):
 
 def get_matching_words_from_urls(images, words_on_first_page):
 	words_matching_urls = []
-
-	images[0].reverse()
+	MIN_WORD_LEN = 3 #helps avoid stopwords
+	images[0].reverse() #urls most likely to appear at end of doc
 	for img in images[0]:
 		text = getTextFromImage(img)
 
@@ -133,7 +107,7 @@ def get_matching_words_from_urls(images, words_on_first_page):
 				# if word.lower() in split_word[1]:
 				#     urls.append(word)
 				urls.append(split_word[1])
-			elif "www." in word.lower() or ".org" in word.lower():
+			elif "www." in word.lower() or ".org" in word.lower() or ".com" in word.lower() or ".net" in word.lower():
 				split_word = word.split(".")
 				if split_word[0] == "www" or "http" in split_word[0]:
 					urls.append(split_word[1])
@@ -141,9 +115,9 @@ def get_matching_words_from_urls(images, words_on_first_page):
 					urls.append(word)
 
 		for url in urls:
-			# print(url)
+
 			for possible_name in words_on_first_page:
-				if possible_name in url and len(possible_name) > 3:
+				if possible_name in url and len(possible_name) > MIN_WORD_LEN:
 					words_matching_urls.append(possible_name)
 
 			if words_matching_urls != []:
@@ -173,38 +147,29 @@ def concat_words(i):
 def readReport(reportName):
 	images = Model.pdfsIterator([reportName])
 
-	words_on_first_page = getWordsOnPage(0, images, True) + getWordsOnPage(1, images, True) + getWordsOnPage(2, images, True)
+	words_on_first_pages = getWordsOnPage(0, images, True) + getWordsOnPage(1, images, True) + getWordsOnPage(2, images, True) #first three pages
 
-	words_on_first_page = list(dict.fromkeys(words_on_first_page))
-
-	# if len(words_on_first_page) == 0:
-	#     return "no names found on first page"
+	words_on_first_pages = list(dict.fromkeys(words_on_first_pages)) #remove duplicates
 
 
-
-	# print(words_on_first_page)
-
-	matching_words_from_urls = get_matching_words_from_urls(images, words_on_first_page)
+	matching_words_from_urls = get_matching_words_from_urls(images, words_on_first_pages) #check urls first
 
 	if matching_words_from_urls == []:
-		matching_words_from_file_name = get_matching_words_from_file_name(words_on_first_page, reportName)
+		matching_words_from_file_name = get_matching_words_from_file_name(words_on_first_pages, reportName) #check filenames second
 
-		if matching_words_from_urls != []:
-			return concat_words(matching_words_from_file_name), words_on_first_page
+		if matching_words_from_file_name != []:
+			return concat_words(matching_words_from_file_name), words_on_first_pages
 
 	if matching_words_from_urls != []:
-		return concat_words(matching_words_from_urls), words_on_first_page
+		return concat_words(matching_words_from_urls), words_on_first_pages
 
 
 
-	return "none", words_on_first_page
-
-
+	return "none", words_on_first_pages #defualt case
 
 
 
 
-	# return "found " + str(words_on_first_page) + " but none could be verified"
 
 
 def upload_pdf(file, answer):
@@ -216,17 +181,17 @@ def upload_pdf(file, answer):
 		connection.commit()
 
 	except:
-		print("ERR")
+		print("Error with db connection, please restart. If problem persists, check your login details")
+		exit(0)
 
-def get_pdfs_in_db():
+def get_pdfs_in_db(): #returns list of existing pdfs
 	with connection.cursor() as cursor:
 		# Read a single record
 		sql = "SELECT `PDF_NAME` FROM `pdfs`"
 		cursor.execute(sql)
 		result = cursor.fetchall()
-		# print(result)
 
-	results  = []
+	results = []
 
 	for r in result:
 		results.append(r["PDF_NAME"])
@@ -235,6 +200,7 @@ def get_pdfs_in_db():
 
 
 def main():
+	#setup endpoint for azure
 	configurationFile = open("configuration.txt", "r")
 	subscription_key = configurationFile.readline().rstrip("\n\r")
 	endpoint = configurationFile.readline().rstrip("\n\r")
@@ -248,41 +214,13 @@ def main():
 	database_items = get_pdfs_in_db()
 	print("a: find name, s: find first three pages of text, d: ignore file, <empty input> - accept found name, anything else accepted as name")
 	files = glob.glob("../reports/*.pdf")
-	for file in files:
+
+	for file in files: #Go through files in reports directory
 		file_name = file.replace("../reports/", "")
 
-		# if file_name not in database_items:
-		# 	print("------")
-		# 	print(file_name)
-		# 	print("searching...  ")
-		# 	p = readReport(file)
-		# 	name = p[0]
-		#
-		# 	words = p[1]
-		#
-		# 	answer = repor "-"
-		#
-		# 	out = name
-		#
-		# 	print(name)
-		# 	while answer != "":
-		# 		if answer == "a":
-		# 			s = ""
-		# 			for word in words:
-		# 				s += word + " "
-		# 				print(s)
-		#
-		# 		elif answer == "n":
-		# 			break
-		# 		elif answer != "-":
-		# 			out = answer
-		# 			break
-		# 		answer = input("confirm/replace > ")
-		#
-		# 	if answer != "n":
-		# 		upload_pdf(file_name, out)
 
-		if file_name not in database_items:
+
+		if file_name not in database_items: #select only new pdfs
 			print(file_name)
 			p = None
 			name = ""
@@ -296,7 +234,10 @@ def main():
 				elif answer == "s":
 					if p is None:
 						p = readReport(file)
-					print(p[1])
+					words = ""
+					for word in p[1]:
+						words += word + " "
+					print(words)
 				elif answer == "":
 					if p is None:
 						print("input a to find name before accepting")
