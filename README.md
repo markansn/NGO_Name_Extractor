@@ -1,7 +1,7 @@
 # NGO_Name_Extractor
 A tool to extract and verify NGO names from annual reports, part of UCL Systems Engineering Module, Team 36
 
-##Requirements
+## Requirements
 An Azure Cognative Services API token is required. Fill in configuration.txt as follows:
 
 First line - API token
@@ -18,21 +18,21 @@ https://uksouth.api.cognitive.microsoft.com/
 
 This program is based on Python 3.7
 
-###Required Python libraries
+### Required Python libraries
 ```
 Pillow
 azure.cognitiveservices.language.textanalytics
 msrest.authentication
 ```
 
-#Usage
+# Usage
 
-##Setup
+## Setup
 Input database details into connect.py
 
 Input details into configuration.txt as described above
 
-##Use
+## Use
 This program is designed to streamline the process of providing NGO names for PDFs by searching documents for names and asking for user confirmation. The program then automatically uploads the correct NGO name and filename to the database.
 
 The application runs from extract.py
