@@ -30,7 +30,10 @@ Connection details for database should be put in connect.py.
 Pillow
 azure.cognitiveservices.language.textanalytics
 msrest.authentication
+Poppler
 ```
+
+Poppler can be installed with Brew on Linux based machines.
 
 # Usage
 

@@ -5,7 +5,7 @@ from PIL import Image
 from azure.cognitiveservices.language.textanalytics import TextAnalyticsClient
 from msrest.authentication import CognitiveServicesCredentials
 import platform
-#use brew to install popper on mac
+#use brew to install poppler on mac
 #CODE BY YANSONG LIU
 # global Vars
 
