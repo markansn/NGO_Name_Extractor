@@ -246,41 +246,74 @@ def main():
 
 
 	database_items = get_pdfs_in_db()
-
+	print("a: find name, s: find first three pages of text, d: ignore file, <empty input> - accept found name, anything else accepted as name")
 	files = glob.glob("../reports/*.pdf")
 	for file in files:
 		file_name = file.replace("../reports/", "")
 
+		# if file_name not in database_items:
+		# 	print("------")
+		# 	print(file_name)
+		# 	print("searching...  ")
+		# 	p = readReport(file)
+		# 	name = p[0]
+		#
+		# 	words = p[1]
+		#
+		# 	answer = repor "-"
+		#
+		# 	out = name
+		#
+		# 	print(name)
+		# 	while answer != "":
+		# 		if answer == "a":
+		# 			s = ""
+		# 			for word in words:
+		# 				s += word + " "
+		# 				print(s)
+		#
+		# 		elif answer == "n":
+		# 			break
+		# 		elif answer != "-":
+		# 			out = answer
+		# 			break
+		# 		answer = input("confirm/replace > ")
+		#
+		# 	if answer != "n":
+		# 		upload_pdf(file_name, out)
+
 		if file_name not in database_items:
-			print("------")
 			print(file_name)
-			print("searching...  ")
-			p = readReport(file)
-			name = p[0]
+			p = None
+			name = ""
+			while True:
+				answer = input("> ")
 
-			words = p[1]
-
-			answer = "-"
-
-			out = name
-
-			print(name)
-			while answer != "":
 				if answer == "a":
-					s = ""
-					for word in words:
-						s += word + " "
-						print(s)
-
+					if p is None:
+						p = readReport(file)
+					print(p[0])
+				elif answer == "s":
+					if p is None:
+						p = readReport(file)
+					print(p[1])
+				elif answer == "":
+					if p is None:
+						print("input a to find name before accepting")
+					else:
+						name = p[0]
+						break
 				elif answer == "n":
 					break
-				elif answer != "-":
-					out = answer
+				else:
+					name = answer
 					break
-				answer = input("confirm/replace > ")
 
-			if answer != "n":
-				upload_pdf(file_name, out)
+			if name is not "":
+				print("submitting PDF " + file_name + " with NGO name " + name)
+				upload_pdf(file_name, name)
+
+
 
 
 
